@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=kevin@medxinsight.com" # Replace with your email
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--api.insecure=true" # Remove for production
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Optional Traefik dashboard; remove if unnecessary
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "traefik-certificates:/letsencrypt"
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - traefik-to-nginx # Replace with your actual overlay network name
+
+networks:
+  traefik-to-nginx:
+    external: true
+
+volumes:
+  traefik-certificates:
+    driver: local
